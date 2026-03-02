@@ -7,97 +7,101 @@ public interface IDamageable
 }
 
 [RequireComponent(typeof(Rigidbody2D))]
-public class PlayerController2D : MonoBehaviour
+public class PlayerController2D : MonoBehaviour, IDamageable
 {
-    [Header("Movimiento")]
+    public int maxHealth = 100;
+    public int currentHealth = 100;
+    public float invulnerabilitySeconds = 0.25f;
+
     public float moveSpeed = 7f;
     public float crouchSpeedMultiplier = 0.5f;
 
-    [Header("Salto")]
     public float jumpForce = 12f;
     public LayerMask groundLayer;
     public Transform groundCheck;
     public float groundCheckRadius = 0.15f;
 
-    [Header("Doble salto")]
     public int maxJumps = 2;
-    private int jumpsLeft;
 
-    [Header("Agacharse / Levantarse (al revés)")]
-    [Tooltip("Mantén esta tecla para LEVANTARTE. Si la sueltas, vuelves a AGACHARTE.")]
     public KeyCode standKey = KeyCode.S;
-
-    [Tooltip("Collider de pie (EN EL MISMO PLAYER).")]
     public Collider2D standingCollider;
-
-    [Tooltip("Collider agachado (EN EL MISMO PLAYER).")]
     public Collider2D crouchCollider;
-
-    [Tooltip("Collider en un empty hijo (HeadCheck) con IsTrigger, para detectar techo.")]
     public Collider2D headCheckCollider;
-
-    [Tooltip("Capas que cuentan como techo (Ground/Obstacle).")]
     public LayerMask ceilingLayer;
-
-    [Tooltip("Reduce un poco el tamaño del check para evitar falsos positivos.")]
     public float ceilingCheckPadding = 0.02f;
 
-    public bool debugCrouch = false;
-
-    // True = agachado (estado por defecto)
-    private bool isCrouching = true;
-
-    [Header("Dash")]
     public KeyCode dashKey = KeyCode.LeftShift;
     public float dashSpeed = 18f;
     public float dashDuration = 0.12f;
     public float dashCooldown = 0.35f;
 
-    [Header("TP con marcador")]
     public KeyCode tpKey = KeyCode.E;
     public GameObject tpMarkerPrefab;
     public Vector3 markerOffset = Vector3.zero;
 
-    [Header("Ataque")]
     public KeyCode lightAttackKey = KeyCode.J;
     public KeyCode heavyAttackKey = KeyCode.K;
 
     public LayerMask enemyMask;
-    public float lightAttackRadius = 0.8f;
-    public float heavyAttackRadius = 1.3f;
-
+    public int lightDamage = 25;
+    public int heavyDamage = 50;
     public float lightAttackCooldown = 0.35f;
     public float heavyAttackCooldown = 1.0f;
 
-    public int lightDamage = 25;
-    public int heavyDamage = 50;
+    public float lightHitRadius = 0.9f;
+    public float heavyAttackRadius = 1.3f;
+
+    public Transform sword;
+    public bool hideSwordWhenIdle = true;
+
+    public float lightSwordDistance = 0.7f;
+    public float lightSwordOutTime = 0.06f;
+    public float lightSwordBackTime = 0.08f;
+
+    public float heavySwordDistance = 1.2f;
+    public float heavySwordSweepTime = 0.14f;
+
+    private Rigidbody2D rb;
+    private float moveInput;
+    private bool isGrounded;
+    private int jumpsLeft;
+
+    private bool isCrouching = true;
+
+    private bool isDashing;
+    private float lastDashTime = -999f;
 
     private float nextLightTime = 0f;
     private float nextHeavyTime = 0f;
 
-    private Rigidbody2D rb;
-
-    private float moveInput;
-    private bool isGrounded;
-    private bool isDashing;
-    private float lastDashTime = -999f;
+    private float invulnUntil = 0f;
 
     private int facing = 1;
 
-    // TP
     private bool hasSavedPosition = false;
     private Vector3 savedPosition;
     private GameObject spawnedMarker;
+
+    private bool isAttacking = false;
+    private Vector3 swordRestLocalPos;
 
     void Awake()
     {
         rb = GetComponent<Rigidbody2D>();
         rb.freezeRotation = true;
 
+        currentHealth = Mathf.Clamp(currentHealth, 0, maxHealth);
+        if (currentHealth <= 0) currentHealth = maxHealth;
+
         jumpsLeft = maxJumps;
 
-        // Arranca AGACHADO por defecto
         ForceStartCrouched();
+
+        if (sword != null)
+        {
+            swordRestLocalPos = sword.localPosition;
+            if (hideSwordWhenIdle) sword.gameObject.SetActive(false);
+        }
     }
 
     void Update()
@@ -110,10 +114,9 @@ public class PlayerController2D : MonoBehaviour
         if (isGrounded)
             jumpsLeft = maxJumps;
 
-        if (!isDashing && moveInput != 0)
+        if (!isDashing && Mathf.Abs(moveInput) > 0.01f)
             facing = moveInput > 0 ? 1 : -1;
 
-        // Agacharse / levantarse al revés
         UpdateReverseCrouch();
 
         if (Input.GetKeyDown(KeyCode.Space))
@@ -134,14 +137,29 @@ public class PlayerController2D : MonoBehaviour
 
     void FixedUpdate()
     {
-        if (isDashing) return;
-
-        // Si está agachado, va más lento
-        float speed = moveSpeed * (isCrouching ? crouchSpeedMultiplier : 1f);
-        rb.linearVelocity = new Vector2(moveInput * speed, rb.linearVelocity.y);
+        if (!isDashing)
+        {
+            float speed = moveSpeed * (isCrouching ? crouchSpeedMultiplier : 1f);
+            rb.linearVelocity = new Vector2(moveInput * speed, rb.linearVelocity.y);
+        }
     }
 
-    // ---------------- SALTO ----------------
+    public void TakeDamage(int amount)
+    {
+        if (amount <= 0) return;
+        if (Time.time < invulnUntil) return;
+
+        currentHealth -= amount;
+        currentHealth = Mathf.Clamp(currentHealth, 0, maxHealth);
+
+        Debug.Log("Player recibió " + amount + " de daño. Vida: " + currentHealth + "/" + maxHealth);
+
+        invulnUntil = Time.time + Mathf.Max(0f, invulnerabilitySeconds);
+
+        if (currentHealth <= 0)
+            gameObject.SetActive(false);
+    }
+
     private void TryJump()
     {
         if (jumpsLeft <= 0) return;
@@ -152,7 +170,6 @@ public class PlayerController2D : MonoBehaviour
         rb.AddForce(Vector2.up * jumpForce, ForceMode2D.Impulse);
     }
 
-    // ---------------- DASH ----------------
     private void TryDash()
     {
         if (Time.time < lastDashTime + dashCooldown) return;
@@ -177,16 +194,12 @@ public class PlayerController2D : MonoBehaviour
         isDashing = false;
     }
 
-    // ---------------- CROUCH REVERSE ----------------
     private void ForceStartCrouched()
     {
         isCrouching = true;
 
         if (standingCollider != null) standingCollider.enabled = false;
         if (crouchCollider != null) crouchCollider.enabled = true;
-
-        if (debugCrouch)
-            Debug.Log("Player: INICIO AGACHADO");
     }
 
     private void UpdateReverseCrouch()
@@ -195,18 +208,11 @@ public class PlayerController2D : MonoBehaviour
 
         if (standHeld)
         {
-            // QUIERE levantarse
-            if (isCrouching)
-            {
-                if (!IsCeilingBlocked())
-                    SetCrouch(false); // pasar a de pie
-                else if (debugCrouch)
-                    Debug.Log("No puedo levantarme: hay techo encima.");
-            }
+            if (isCrouching && !IsCeilingBlocked())
+                SetCrouch(false);
         }
         else
         {
-            // Si suelta S, vuelve a agacharse
             if (!isCrouching)
                 SetCrouch(true);
         }
@@ -218,9 +224,6 @@ public class PlayerController2D : MonoBehaviour
 
         if (standingCollider != null) standingCollider.enabled = !crouch;
         if (crouchCollider != null) crouchCollider.enabled = crouch;
-
-        if (debugCrouch)
-            Debug.Log(crouch ? "Player: AGACHADO" : "Player: DE PIE");
     }
 
     private bool IsCeilingBlocked()
@@ -244,7 +247,6 @@ public class PlayerController2D : MonoBehaviour
         return blocked;
     }
 
-    // ---------------- TP ----------------
     private void HandleTeleportToggle()
     {
         if (!hasSavedPosition)
@@ -256,7 +258,6 @@ public class PlayerController2D : MonoBehaviour
             {
                 if (spawnedMarker != null) Destroy(spawnedMarker);
                 spawnedMarker = Instantiate(tpMarkerPrefab, savedPosition + markerOffset, Quaternion.identity);
-                spawnedMarker.name = "TP_Marker";
             }
             return;
         }
@@ -270,32 +271,119 @@ public class PlayerController2D : MonoBehaviour
         hasSavedPosition = false;
     }
 
-    // ---------------- ATAQUES ----------------
     private void TryLightAttack()
     {
         if (Time.time < nextLightTime) return;
+        if (isAttacking) return;
 
         nextLightTime = Time.time + lightAttackCooldown;
 
-        Debug.Log("Player: ATAQUE LIGERO");
-        DoRadialDamage(lightAttackRadius, lightDamage);
+        Debug.Log("ATAQUE LIGERO");
+        StartCoroutine(LightAttackRoutine());
     }
 
     private void TryHeavyAttack()
     {
         if (Time.time < nextHeavyTime) return;
+        if (isAttacking) return;
 
         nextHeavyTime = Time.time + heavyAttackCooldown;
 
-        Debug.Log("Player: ATAQUE PESADO");
-        DoRadialDamage(heavyAttackRadius, heavyDamage);
+        Debug.Log("ATAQUE PESADO (AOE)");
+        StartCoroutine(HeavyAttackRoutine());
     }
 
-    private void DoRadialDamage(float radius, int damage)
+    private IEnumerator LightAttackRoutine()
     {
-        Vector2 center = transform.position;
+        isAttacking = true;
 
+        if (sword != null)
+        {
+            if (hideSwordWhenIdle) sword.gameObject.SetActive(true);
+
+            Vector3 start = swordRestLocalPos;
+            Vector3 target = swordRestLocalPos + new Vector3(facing * lightSwordDistance, 0f, 0f);
+
+            float t = 0f;
+            float outDur = Mathf.Max(0.001f, lightSwordOutTime);
+            while (t < 1f)
+            {
+                t += Time.deltaTime / outDur;
+                sword.localPosition = Vector3.Lerp(start, target, t);
+                yield return null;
+            }
+
+            DoRadialDamage((Vector2)transform.position, lightHitRadius, lightDamage);
+
+            t = 0f;
+            float backDur = Mathf.Max(0.001f, lightSwordBackTime);
+            while (t < 1f)
+            {
+                t += Time.deltaTime / backDur;
+                sword.localPosition = Vector3.Lerp(target, start, t);
+                yield return null;
+            }
+
+            sword.localPosition = start;
+            if (hideSwordWhenIdle) sword.gameObject.SetActive(false);
+        }
+        else
+        {
+            DoRadialDamage((Vector2)transform.position, lightHitRadius, lightDamage);
+            yield return null;
+        }
+
+        isAttacking = false;
+    }
+
+    private IEnumerator HeavyAttackRoutine()
+    {
+        isAttacking = true;
+
+        if (sword != null)
+        {
+            if (hideSwordWhenIdle) sword.gameObject.SetActive(true);
+
+            Vector3 start = swordRestLocalPos;
+            Vector3 from = swordRestLocalPos + new Vector3(-facing * heavySwordDistance, 0f, 0f);
+            Vector3 to = swordRestLocalPos + new Vector3(facing * heavySwordDistance, 0f, 0f);
+
+            sword.localPosition = from;
+
+            float t = 0f;
+            float dur = Mathf.Max(0.001f, heavySwordSweepTime);
+            bool damageDone = false;
+
+            while (t < 1f)
+            {
+                t += Time.deltaTime / dur;
+                sword.localPosition = Vector3.Lerp(from, to, t);
+
+                if (!damageDone && t >= 0.5f)
+                {
+                    damageDone = true;
+                    DoRadialDamage((Vector2)transform.position, heavyAttackRadius, heavyDamage);
+                }
+
+                yield return null;
+            }
+
+            sword.localPosition = start;
+            if (hideSwordWhenIdle) sword.gameObject.SetActive(false);
+        }
+        else
+        {
+            DoRadialDamage((Vector2)transform.position, heavyAttackRadius, heavyDamage);
+            yield return null;
+        }
+
+        isAttacking = false;
+    }
+
+    private void DoRadialDamage(Vector2 center, float radius, int damage)
+    {
         Collider2D[] hits = Physics2D.OverlapCircleAll(center, radius, enemyMask);
+
         for (int i = 0; i < hits.Length; i++)
         {
             IDamageable dmg =
@@ -307,7 +395,6 @@ public class PlayerController2D : MonoBehaviour
         }
     }
 
-    // ---------------- GIZMOS ----------------
     void OnDrawGizmosSelected()
     {
         if (groundCheck != null)
@@ -319,7 +406,7 @@ public class PlayerController2D : MonoBehaviour
             Gizmos.DrawWireCube(b.center, b.size);
         }
 
-        Gizmos.DrawWireSphere(transform.position, lightAttackRadius);
+        Gizmos.DrawWireSphere(transform.position, lightHitRadius);
         Gizmos.DrawWireSphere(transform.position, heavyAttackRadius);
     }
 }

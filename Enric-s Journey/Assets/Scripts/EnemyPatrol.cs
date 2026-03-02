@@ -49,25 +49,20 @@ public class EnemyAI : MonoBehaviour
 
     void FixedUpdate()
     {
-        // Pausa tras atacar
         if (Time.time < pauseUntil)
         {
             StopMovement();
             return;
         }
 
-        // Si no hay player -> patrulla
         if (player == null)
         {
             PatrolXOnly();
             return;
         }
 
-        // Distancias SOLO EN X
         float distX = Mathf.Abs(rb.position.x - (float)player.position.x);
 
-        // Si se aleja mucho en X -> olvidar y volver a patrulla
-        // (no usamos Vector2.Distance para que la Y no fastidie)
         if (distX > detectionRange * 1.3f)
         {
             player = null;
@@ -75,7 +70,6 @@ public class EnemyAI : MonoBehaviour
             return;
         }
 
-        // En rango de ataque (solo X)
         if (distX <= attackRange)
         {
             StopMovement();
@@ -87,7 +81,6 @@ public class EnemyAI : MonoBehaviour
             return;
         }
 
-        // Persecución SOLO EN X (mantiene la Y del enemigo)
         Vector2 targetPos = new Vector2(player.position.x, rb.position.y);
         Vector2 newPos = Vector2.MoveTowards(rb.position, targetPos, chaseSpeed * Time.fixedDeltaTime);
         rb.MovePosition(newPos);
@@ -99,12 +92,11 @@ public class EnemyAI : MonoBehaviour
         Collider2D hit = Physics2D.OverlapCircle(transform.position, detectionRange, playerLayer);
         if (hit == null) return;
 
-        // Intentamos agarrar el objeto "real" que recibe daño (suele estar en el root del player)
         var dmg = hit.GetComponentInParent<IDamageable>();
         if (dmg != null)
-            player = ((MonoBehaviour)dmg).transform;   // el transform del componente que implementa IDamageable
+            player = ((MonoBehaviour)dmg).transform;
         else
-            player = hit.transform.root;               // fallback
+            player = hit.transform.root;
     }
 
     void Attack()

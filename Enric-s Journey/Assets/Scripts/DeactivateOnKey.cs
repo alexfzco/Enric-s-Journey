@@ -13,7 +13,6 @@ public class DeactivateOnKey : MonoBehaviour
 
     void Update()
     {
-        // Detectamos la pulsación de la tecla solo si el jugador está dentro
         if (jugadorEnRango && Input.GetKeyDown(teclaInteraccion))
         {
             EjecutarDestruccion();
@@ -33,11 +32,9 @@ public class DeactivateOnKey : MonoBehaviour
         }
     }
 
-    // --- DETECCIÓN 2D ---
 
     private void OnTriggerEnter2D(Collider2D collision)
     {
-        // Importante: Tu personaje debe tener el Tag "Player"
         if (collision.CompareTag("Player"))
         {
             jugadorEnRango = true;

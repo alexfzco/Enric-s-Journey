@@ -8,7 +8,6 @@ public class ScoreManager : MonoBehaviour
 
     void Awake()
     {
-        // Singleton simple
         if (Instance == null)
             Instance = this;
         else

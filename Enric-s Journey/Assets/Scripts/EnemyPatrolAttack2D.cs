@@ -8,7 +8,7 @@ public class EnemyPatrolAttack2D : MonoBehaviour
     [Header("Refs")]
     public Rigidbody2D rb;
     public Transform player;
-    public MonoBehaviour enemyHealth; // Arrastra aquí tu EnemyHealth (opcional: lo intenta detectar)
+    public MonoBehaviour enemyHealth;
 
     [Header("Patrol")]
     public Transform[] patrolPoints;
@@ -42,8 +42,7 @@ public class EnemyPatrolAttack2D : MonoBehaviour
     private float waitTimer = 0f;
     private float nextAttackTime = 0f;
 
-    // Facing fijo para evitar flip spam
-    private int facingSign = 1; // 1 derecha, -1 izquierda
+    private int facingSign = 1;
 
     void Awake()
     {
@@ -55,7 +54,6 @@ public class EnemyPatrolAttack2D : MonoBehaviour
         if (enemyHealth == null)
             enemyHealth = GetComponent("EnemyHealth") as MonoBehaviour;
 
-        // Inicializa facing según escala actual
         if (transform.localScale.x < 0f) facingSign = -1;
         else facingSign = 1;
     }
@@ -76,7 +74,6 @@ public class EnemyPatrolAttack2D : MonoBehaviour
 
         float distToPlayer = Vector2.Distance(transform.position, player.position);
 
-        // Transiciones de estado con rangos claros
         switch (state)
         {
             case State.Patrol:
@@ -93,15 +90,11 @@ public class EnemyPatrolAttack2D : MonoBehaviour
                 break;
         }
 
-        // Ejecutar estado
         if (state == State.Patrol) DoPatrol();
         else if (state == State.Chase) DoChase();
         else DoAttack();
     }
 
-    // ----------------------------
-    // PATROL
-    // ----------------------------
     private void DoPatrol()
     {
         if (patrolPoints == null || patrolPoints.Length == 0)
@@ -125,7 +118,6 @@ public class EnemyPatrolAttack2D : MonoBehaviour
             return;
         }
 
-        // Debug solo cuando cambia el objetivo
         if (debugLogs && patrolIndex != lastLoggedPatrolIndex)
         {
             Debug.Log($"[{name}] Yendo a punto {patrolIndex}: {target.name} (pos {target.position})");
@@ -134,10 +126,8 @@ public class EnemyPatrolAttack2D : MonoBehaviour
 
         float dx = target.position.x - transform.position.x;
 
-        // Orientación (con deadzone anti-vibración)
         FaceToDx(dx);
 
-        // Llegada por X
         if (Mathf.Abs(dx) <= arriveDistanceX)
         {
             StopHorizontal();
@@ -146,7 +136,6 @@ public class EnemyPatrolAttack2D : MonoBehaviour
             return;
         }
 
-        // Movimiento estable: si dx es muy pequeño, mejor parar
         if (Mathf.Abs(dx) < flipDeadzoneX)
         {
             StopHorizontal();
@@ -160,27 +149,21 @@ public class EnemyPatrolAttack2D : MonoBehaviour
     private void AdvancePatrolIndex()
     {
         patrolIndex = (patrolIndex + 1) % patrolPoints.Length;
-        lastLoggedPatrolIndex = -1; // fuerza log del siguiente
+        lastLoggedPatrolIndex = -1;
     }
 
-    // ----------------------------
-    // CHASE
-    // ----------------------------
     private void DoChase()
     {
         float dx = player.position.x - transform.position.x;
 
-        // Orientación estable
         FaceToDx(dx);
 
-        // Evita micro oscilaciones cuando casi está alineado
         if (Mathf.Abs(dx) <= arriveDistanceX)
         {
             StopHorizontal();
             return;
         }
 
-        // Si está dentro de la deadzone del flip, no metas empujoncitos
         if (Mathf.Abs(dx) < flipDeadzoneX)
         {
             StopHorizontal();
@@ -191,9 +174,6 @@ public class EnemyPatrolAttack2D : MonoBehaviour
         MoveHorizontal(dir, chaseSpeed);
     }
 
-    // ----------------------------
-    // ATTACK
-    // ----------------------------
     private void DoAttack()
     {
         StopHorizontal();
@@ -208,14 +188,9 @@ public class EnemyPatrolAttack2D : MonoBehaviour
         if (debugLogs)
             Debug.Log($"[{name}] ATTACK (cooldown {attackCooldown}s) dmg={attackDamage}");
 
-        // Intento: si el Player tiene TakeDamage(int), se llamará.
-        // Si no existe, no pasa nada.
         player.gameObject.SendMessage("TakeDamage", attackDamage, SendMessageOptions.DontRequireReceiver);
     }
 
-    // ----------------------------
-    // MOVIMIENTO
-    // ----------------------------
     private void MoveHorizontal(float dir, float speed)
     {
         rb.linearVelocity = new Vector2(dir * speed, rb.linearVelocity.y);
@@ -226,10 +201,8 @@ public class EnemyPatrolAttack2D : MonoBehaviour
         rb.linearVelocity = new Vector2(0f, rb.linearVelocity.y);
     }
 
-    // Flip anti-vibración
     private void FaceToDx(float dx)
     {
-        // No cambies orientación si dx es muy pequeño
         if (Mathf.Abs(dx) < flipDeadzoneX) return;
 
         facingSign = dx > 0f ? 1 : -1;
@@ -239,9 +212,6 @@ public class EnemyPatrolAttack2D : MonoBehaviour
         transform.localScale = s;
     }
 
-    // ----------------------------
-    // ENEMY HEALTH (sin depender de tu clase exacta)
-    // ----------------------------
     private bool IsDeadFromEnemyHealth()
     {
         if (enemyHealth == null) return false;
@@ -249,18 +219,15 @@ public class EnemyPatrolAttack2D : MonoBehaviour
         object comp = enemyHealth;
         Type t = comp.GetType();
 
-        // bool IsDead / isDead / dead
         if (TryReadBool(t, comp, "IsDead", out bool b)) return b;
         if (TryReadBool(t, comp, "isDead", out b)) return b;
         if (TryReadBool(t, comp, "dead", out b)) return b;
 
-        // números currentHealth/health/etc. <= 0
         if (TryReadNumber(t, comp, "currentHealth", out float hp)) return hp <= 0f;
         if (TryReadNumber(t, comp, "CurrentHealth", out hp)) return hp <= 0f;
         if (TryReadNumber(t, comp, "health", out hp)) return hp <= 0f;
         if (TryReadNumber(t, comp, "Health", out hp)) return hp <= 0f;
 
-        // método IsDead()
         MethodInfo m = t.GetMethod("IsDead", BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic);
         if (m != null && m.ReturnType == typeof(bool) && m.GetParameters().Length == 0)
         {
@@ -322,9 +289,6 @@ public class EnemyPatrolAttack2D : MonoBehaviour
         return false;
     }
 
-    // ----------------------------
-    // GIZMOS
-    // ----------------------------
     void OnDrawGizmosSelected()
     {
         Gizmos.DrawWireSphere(transform.position, detectRange);

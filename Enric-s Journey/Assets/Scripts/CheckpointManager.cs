@@ -1,32 +1,24 @@
 using UnityEngine;
-using System.Collections.Generic;
 
 public class CheckpointManager : MonoBehaviour
 {
     public static CheckpointManager instancia;
-    public List<Transform> listaCheckpoints = new List<Transform>();
 
     private Vector3 ultimaPosicion;
-    private int indiceActual = -1;
 
     void Awake()
     {
         if (instancia == null) instancia = this;
-        else Destroy(gameObject);
+        else { Destroy(gameObject); return; }
 
         GameObject player = GameObject.FindGameObjectWithTag("Player");
-        if (player != null) ultimaPosicion = player.transform.position;
+        if (player != null)
+            ultimaPosicion = player.transform.position;
     }
 
-    public void ActualizarCheckpoint(Transform nuevoCheckpoint)
+    public void SetCheckpoint(Vector3 posicion)
     {
-        int nuevoIndice = listaCheckpoints.IndexOf(nuevoCheckpoint);
-
-        if (nuevoIndice > indiceActual)
-        {
-            indiceActual = nuevoIndice;
-            ultimaPosicion = nuevoCheckpoint.position;
-        }
+        ultimaPosicion = posicion;
     }
 
     public Vector3 GetUltimaPosicion()

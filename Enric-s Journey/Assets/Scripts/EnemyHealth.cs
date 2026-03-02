@@ -2,40 +2,29 @@ using UnityEngine;
 
 public class EnemyHealth : MonoBehaviour, IDamageable
 {
-    public int maxHealth = 100;
-    public int currentHealth = 100;
-
-    public bool destroyOnDeath = true;
+    public int maxHealth = 50;
+    public int currentHealth;
 
     void Awake()
     {
-        currentHealth = Mathf.Clamp(currentHealth, 0, maxHealth);
-
-        if (currentHealth <= 0)
-            currentHealth = maxHealth;
+        currentHealth = maxHealth;
     }
 
     public void TakeDamage(int amount)
     {
         if (amount <= 0) return;
 
-        currentHealth -= amount;
-        currentHealth = Mathf.Clamp(currentHealth, 0, maxHealth);
-
-        Debug.Log(gameObject.name + " recibió " + amount +
-                  " de daño. Vida restante: " + currentHealth);
+        currentHealth = Mathf.Clamp(currentHealth - amount, 0, maxHealth);
+        Debug.Log($"{name} recibió {amount} de daño. Vida: {currentHealth}/{maxHealth}");
 
         if (currentHealth <= 0)
             Die();
+
+        Debug.Log($"{name} daño: {amount} | antes: {currentHealth} | después: {currentHealth - amount}");
     }
 
-    private void Die()
+    void Die()
     {
-        Debug.Log(gameObject.name + " murió");
-
-        if (destroyOnDeath)
-            Destroy(gameObject);
-        else
-            gameObject.SetActive(false);
+        Destroy(gameObject);
     }
 }

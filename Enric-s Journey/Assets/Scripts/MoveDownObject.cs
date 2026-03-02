@@ -34,6 +34,9 @@ public class MoveDownObject : MonoBehaviour
 
         if (useRigidbody)
             rb = GetComponent<Rigidbody2D>();
+
+        // ?? se registra para que lo reseteen al morir/respawnear
+        PuzzleResetManager.Register(this);
     }
 
     void Update()
@@ -99,6 +102,26 @@ public class MoveDownObject : MonoBehaviour
             transform.position += direction * (speed * Time.deltaTime);
 
         movedDistance = Vector3.Distance(startPosition, transform.position);
+    }
+
+    // ? RESET DEL PUZLE (lo importante)
+    public void ResetObject()
+    {
+        StopAllCoroutines();
+
+        isMoving = false;
+        isWaitingDelay = false;
+        hasActivated = false;
+
+        movedDistance = 0f;
+        transform.position = startPosition;
+
+        if (useRigidbody && rb != null)
+        {
+            rb.linearVelocity = Vector2.zero;
+            rb.angularVelocity = 0f;
+            rb.position = startPosition; // por si Unity prefiere rb over transform
+        }
     }
 
     void OnDrawGizmosSelected()

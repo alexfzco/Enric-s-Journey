@@ -12,6 +12,9 @@ public class DeathTrigger : MonoBehaviour
             {
                 rb.linearVelocity = Vector2.zero;
             }
+
+            var reset = FindFirstObjectByType<PuzzleResetManager>();
+            if (reset != null) reset.ResetAll();
         }
     }
 }

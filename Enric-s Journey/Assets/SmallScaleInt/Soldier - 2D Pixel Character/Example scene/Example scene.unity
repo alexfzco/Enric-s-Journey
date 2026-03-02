@@ -284,12 +284,12 @@ Transform:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 10213668}
   serializedVersion: 2
-  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 5.17, y: -1.45, z: -10}
+  m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
+  m_LocalPosition: {x: 0.6, y: 0.31, z: -10}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
-  m_Father: {fileID: 0}
+  m_Father: {fileID: 970805518}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!114 &10213672
 MonoBehaviour:
@@ -758,11 +758,11 @@ GameObject:
   - component: {fileID: 429413426}
   m_Layer: 0
   m_Name: FG
-  m_TagString: Untagged
+  m_TagString: Ground
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 0
+  m_IsActive: 1
 --- !u!212 &429413426
 SpriteRenderer:
   m_ObjectHideFlags: 0
@@ -2405,11 +2405,11 @@ GameObject:
   - component: {fileID: 1347192795}
   m_Layer: 0
   m_Name: BG
-  m_TagString: Untagged
+  m_TagString: Ground
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 0
+  m_IsActive: 1
 --- !u!212 &1347192795
 SpriteRenderer:
   m_ObjectHideFlags: 0
@@ -3560,13 +3560,17 @@ PrefabInstance:
       propertyPath: m_Name
       value: Soldier
       objectReference: {fileID: 0}
+    - target: {fileID: 1100554625987857433, guid: 97671da1a75dfb548a89a47de212f17d, type: 3}
+      propertyPath: m_TagString
+      value: Player
+      objectReference: {fileID: 0}
     - target: {fileID: 3590700700514411290, guid: 97671da1a75dfb548a89a47de212f17d, type: 3}
       propertyPath: m_LocalPosition.x
       value: 5.17
       objectReference: {fileID: 0}
     - target: {fileID: 3590700700514411290, guid: 97671da1a75dfb548a89a47de212f17d, type: 3}
       propertyPath: m_LocalPosition.y
-      value: -7
+      value: -6.39
       objectReference: {fileID: 0}
     - target: {fileID: 3590700700514411290, guid: 97671da1a75dfb548a89a47de212f17d, type: 3}
       propertyPath: m_LocalPosition.z
@@ -3602,14 +3606,16 @@ PrefabInstance:
       objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
-    m_AddedGameObjects: []
+    m_AddedGameObjects:
+    - targetCorrespondingSourceObject: {fileID: 3590700700514411290, guid: 97671da1a75dfb548a89a47de212f17d, type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 10213671}
     m_AddedComponents: []
   m_SourcePrefab: {fileID: 100100000, guid: 97671da1a75dfb548a89a47de212f17d, type: 3}
 --- !u!1660057539 &9223372036854775807
 SceneRoots:
   m_ObjectHideFlags: 0
   m_Roots:
-  - {fileID: 10213671}
   - {fileID: 1140960932}
   - {fileID: 83234543}
   - {fileID: 2597625296558897140}

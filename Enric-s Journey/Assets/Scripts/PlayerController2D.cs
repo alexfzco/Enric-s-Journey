@@ -9,55 +9,43 @@ public interface IDamageable
 [RequireComponent(typeof(Rigidbody2D))]
 public class PlayerController2D : MonoBehaviour, IDamageable
 {
+    [Header("Health")]
     public int maxHealth = 100;
     public int currentHealth = 100;
     public float invulnerabilitySeconds = 0.25f;
 
+    [Header("Movement")]
     public float moveSpeed = 7f;
-    public float crouchSpeedMultiplier = 0.5f;
-
     public float jumpForce = 12f;
     public LayerMask groundLayer;
     public Transform groundCheck;
     public float groundCheckRadius = 0.15f;
-
     public int maxJumps = 2;
 
-    public KeyCode standKey = KeyCode.S;
-    public Collider2D standingCollider;
-    public Collider2D crouchCollider;
-    public Collider2D headCheckCollider;
-    public LayerMask ceilingLayer;
-    public float ceilingCheckPadding = 0.02f;
-
-    public KeyCode dashKey = KeyCode.LeftShift;
-    public float dashSpeed = 18f;
-    public float dashDuration = 0.12f;
-    public float dashCooldown = 0.35f;
-
+    [Header("Teleport")]
     public KeyCode tpKey = KeyCode.E;
     public GameObject tpMarkerPrefab;
     public Vector3 markerOffset = Vector3.zero;
 
+    [Header("Combat Inputs & Cooldowns")]
     public KeyCode lightAttackKey = KeyCode.J;
     public KeyCode heavyAttackKey = KeyCode.K;
-
     public LayerMask enemyMask;
     public int lightDamage = 25;
     public int heavyDamage = 50;
     public float lightAttackCooldown = 0.35f;
     public float heavyAttackCooldown = 1.0f;
 
+    [Header("Combat Hitboxes")]
     public float lightHitRadius = 0.9f;
     public float heavyAttackRadius = 1.3f;
 
+    [Header("Sword Visuals")]
     public Transform sword;
     public bool hideSwordWhenIdle = true;
-
     public float lightSwordDistance = 0.7f;
     public float lightSwordOutTime = 0.06f;
     public float lightSwordBackTime = 0.08f;
-
     public float heavySwordDistance = 1.2f;
     public float heavySwordSweepTime = 0.14f;
 
@@ -66,16 +54,9 @@ public class PlayerController2D : MonoBehaviour, IDamageable
     private bool isGrounded;
     private int jumpsLeft;
 
-    private bool isCrouching = true;
-
-    private bool isDashing;
-    private float lastDashTime = -999f;
-
     private float nextLightTime = 0f;
     private float nextHeavyTime = 0f;
-
     private float invulnUntil = 0f;
-
     private int facing = 1;
 
     private bool hasSavedPosition = false;
@@ -95,8 +76,6 @@ public class PlayerController2D : MonoBehaviour, IDamageable
 
         jumpsLeft = maxJumps;
 
-        ForceStartCrouched();
-
         if (sword != null)
         {
             swordRestLocalPos = sword.localPosition;
@@ -114,16 +93,11 @@ public class PlayerController2D : MonoBehaviour, IDamageable
         if (isGrounded)
             jumpsLeft = maxJumps;
 
-        if (!isDashing && Mathf.Abs(moveInput) > 0.01f)
+        if (Mathf.Abs(moveInput) > 0.01f)
             facing = moveInput > 0 ? 1 : -1;
-
-        UpdateReverseCrouch();
 
         if (Input.GetKeyDown(KeyCode.Space))
             TryJump();
-
-        if (Input.GetKeyDown(dashKey))
-            TryDash();
 
         if (Input.GetKeyDown(tpKey))
             HandleTeleportToggle();
@@ -137,11 +111,8 @@ public class PlayerController2D : MonoBehaviour, IDamageable
 
     void FixedUpdate()
     {
-        if (!isDashing)
-        {
-            float speed = moveSpeed * (isCrouching ? crouchSpeedMultiplier : 1f);
-            rb.linearVelocity = new Vector2(moveInput * speed, rb.linearVelocity.y);
-        }
+        // Movimiento horizontal simple sin multiplicadores de agachado ni bloqueos de dash
+        rb.linearVelocity = new Vector2(moveInput * moveSpeed, rb.linearVelocity.y);
     }
 
     public void TakeDamage(int amount)
@@ -168,83 +139,6 @@ public class PlayerController2D : MonoBehaviour, IDamageable
 
         rb.linearVelocity = new Vector2(rb.linearVelocity.x, 0f);
         rb.AddForce(Vector2.up * jumpForce, ForceMode2D.Impulse);
-    }
-
-    private void TryDash()
-    {
-        if (Time.time < lastDashTime + dashCooldown) return;
-        if (isDashing) return;
-
-        lastDashTime = Time.time;
-        StartCoroutine(DashRoutine());
-    }
-
-    private IEnumerator DashRoutine()
-    {
-        isDashing = true;
-
-        float originalGravity = rb.gravityScale;
-        rb.gravityScale = 0f;
-
-        rb.linearVelocity = new Vector2(facing * dashSpeed, 0f);
-
-        yield return new WaitForSeconds(dashDuration);
-
-        rb.gravityScale = originalGravity;
-        isDashing = false;
-    }
-
-    private void ForceStartCrouched()
-    {
-        isCrouching = true;
-
-        if (standingCollider != null) standingCollider.enabled = false;
-        if (crouchCollider != null) crouchCollider.enabled = true;
-    }
-
-    private void UpdateReverseCrouch()
-    {
-        bool standHeld = Input.GetKey(standKey);
-
-        if (standHeld)
-        {
-            if (isCrouching && !IsCeilingBlocked())
-                SetCrouch(false);
-        }
-        else
-        {
-            if (!isCrouching)
-                SetCrouch(true);
-        }
-    }
-
-    private void SetCrouch(bool crouch)
-    {
-        isCrouching = crouch;
-
-        if (standingCollider != null) standingCollider.enabled = !crouch;
-        if (crouchCollider != null) crouchCollider.enabled = crouch;
-    }
-
-    private bool IsCeilingBlocked()
-    {
-        if (headCheckCollider == null) return false;
-        if (ceilingLayer.value == 0) return false;
-
-        bool prev = headCheckCollider.enabled;
-        headCheckCollider.enabled = false;
-
-        Bounds b = headCheckCollider.bounds;
-
-        Vector2 size = new Vector2(
-            Mathf.Max(0.01f, b.size.x - ceilingCheckPadding),
-            Mathf.Max(0.01f, b.size.y - ceilingCheckPadding)
-        );
-
-        bool blocked = Physics2D.OverlapBox(b.center, size, 0f, ceilingLayer) != null;
-
-        headCheckCollider.enabled = prev;
-        return blocked;
     }
 
     private void HandleTeleportToggle()
@@ -399,12 +293,6 @@ public class PlayerController2D : MonoBehaviour, IDamageable
     {
         if (groundCheck != null)
             Gizmos.DrawWireSphere(groundCheck.position, groundCheckRadius);
-
-        if (headCheckCollider != null)
-        {
-            Bounds b = headCheckCollider.bounds;
-            Gizmos.DrawWireCube(b.center, b.size);
-        }
 
         Gizmos.DrawWireSphere(transform.position, lightHitRadius);
         Gizmos.DrawWireSphere(transform.position, heavyAttackRadius);

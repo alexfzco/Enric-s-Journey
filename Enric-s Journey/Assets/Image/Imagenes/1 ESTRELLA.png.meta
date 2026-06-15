@@ -1,10 +1,10 @@
 fileFormatVersion: 2
-guid: c68096f03e7c87d46aca6aca9b33e794
+guid: 6fdb24dec269c1b4182fdcc8f4efd73c
 TextureImporter:
   internalIDToNameTable:
   - first:
-      213: 1819165813664306135
-    second: Level_Layout_5_0
+      213: -5149607550072901080
+    second: 1 ESTRELLA_0
   externalObjects: {}
   serializedVersion: 13
   mipmaps:
@@ -100,13 +100,13 @@ TextureImporter:
     serializedVersion: 2
     sprites:
     - serializedVersion: 2
-      name: Level_Layout_5_0
+      name: 1 ESTRELLA_0
       rect:
         serializedVersion: 2
         x: 0
         y: 0
-        width: 3785
-        height: 915
+        width: 2560
+        height: 1440
       alignment: 0
       pivot: {x: 0, y: 0}
       border: {x: 0, y: 0, z: 0, w: 0}
@@ -115,8 +115,8 @@ TextureImporter:
       physicsShape: []
       tessellationDetail: -1
       bones: []
-      spriteID: 7d3defe4ba9fe3910800000000000000
-      internalID: 1819165813664306135
+      spriteID: 8223c3d873be888b0800000000000000
+      internalID: -5149607550072901080
       vertices: []
       indices: 
       edges: []
@@ -135,7 +135,7 @@ TextureImporter:
     spriteCustomMetadata:
       entries: []
     nameFileIdTable:
-      Level_Layout_5_0: 1819165813664306135
+      1 ESTRELLA_0: -5149607550072901080
   mipmapLimitGroupName: 
   pSDRemoveMatte: 0
   userData: 

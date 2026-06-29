@@ -534,7 +534,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 5789947383295209946, guid: c5372200307913c49b85326b5b7585f0, type: 3}
       propertyPath: currentHealth
-      value: 30
+      value: 80
       objectReference: {fileID: 0}
     - target: {fileID: 7413226879230900366, guid: c5372200307913c49b85326b5b7585f0, type: 3}
       propertyPath: rb
@@ -611,9 +611,9 @@ MonoBehaviour:
   playerLayer:
     serializedVersion: 2
     m_Bits: 128
-  attackRange: 1.91
-  damage: 15
-  attackCooldown: 1
+  attackRange: 1.2
+  damage: 30
+  attackCooldown: 2
   attackPause: 0.25
 --- !u!1 &163820425
 GameObject:

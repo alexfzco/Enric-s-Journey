@@ -9,9 +9,9 @@ public class MovimientoJugador : MonoBehaviour
     public float fuerzaSalto = 12f;
     private float movimientoH;
 
-    [Header("Detección de Suelo")]
-    public Transform verificadorSuelo; // Un objeto vacío a los pies del jugador
-    public Vector2 dimensionesCaja;    // Tamaño de la zona de detección
+    [Header("Detecciï¿½n de Suelo")]
+    public Transform verificadorSuelo; // Un objeto vacï¿½o a los pies del jugador
+    public Vector2 dimensionesCaja;    // Tamaï¿½o de la zona de detecciï¿½n
     public LayerMask capaSuelo;         // Selecciona la capa "Suelo" en el inspector
     private bool enSuelo;
 
@@ -27,20 +27,20 @@ public class MovimientoJugador : MonoBehaviour
         // Movimiento horizontal (A / D o Flechas)
         movimientoH = Input.GetAxisRaw("Horizontal");
 
-        // Detectamos si tocamos el suelo usando una pequeña caja invisible en los pies
+        // Detectamos si tocamos el suelo usando una pequeï¿½a caja invisible en los pies
         enSuelo = Physics2D.OverlapBox(verificadorSuelo.position, dimensionesCaja, 0f, capaSuelo);
 
         // Salto (Espacio)
         if (Input.GetButtonDown("Jump") && enSuelo)
         {
-            rb.velocity = new Vector2(rb.velocity.x, fuerzaSalto);
+            rb.linearVelocity = new Vector2(rb.linearVelocity.x, fuerzaSalto);
         }
     }
 
     void FixedUpdate()
     {
-        // Aplicamos la velocidad en el Rigidbody para un movimiento físico limpio
-        rb.velocity = new Vector2(movimientoH * velocidad, rb.velocity.y);
+        // Aplicamos la velocidad en el Rigidbody para un movimiento fï¿½sico limpio
+        rb.linearVelocity = new Vector2(movimientoH * velocidad, rb.linearVelocity.y);
     }
 
     // Dibuja la caja de suelo en el editor para que puedas verla y ajustarla

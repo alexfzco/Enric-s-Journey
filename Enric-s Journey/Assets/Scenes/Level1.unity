@@ -33905,7 +33905,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   collectedCount: 0
-  minFor3Stars: 3
+  minFor3Stars: 4
   minFor2Stars: 2
   minFor1Star: 1
 --- !u!4 &2095772394
